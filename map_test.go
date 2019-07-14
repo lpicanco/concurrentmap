@@ -54,6 +54,54 @@ func TestPutTwice(t *testing.T) {
 	}
 }
 
+func TestContains(t *testing.T) {
+	m := New()
+
+	if m.Contains(1) {
+		t.Errorf("m.Contains(1) == true")
+	}
+
+	m.Put(1, 1)
+
+	if !m.Contains(1) {
+		t.Errorf("m.Contains(1) == false")
+	}
+}
+
+func TestComputeIfAbsent(t *testing.T) {
+	m := New()
+
+	squareFunc := func(n interface{}) interface{} {
+		return n.(int) * n.(int)
+	}
+
+	cases := []struct {
+		in   int
+		want int
+		computed bool
+	}{
+		{1, 1, false},
+		{2, 4, true},
+		{5, 25, true},
+		{6, 6, false},
+	}
+
+	for _, c := range cases {
+		if !c.computed {
+			m.Put(c.in, c.want)
+		}
+
+		got, computed := m.ComputeIfAbsent(c.in, squareFunc)
+		if got != c.want {
+			t.Errorf("m.ComputeIfAbsent(%v, squareFunc) == %v, want %v", c.in, got, c.want)
+		}
+
+		if computed != c.computed {
+			t.Errorf("m.ComputeIfAbsent(%v, squareFunc) == _, %v", c.in, computed)
+		}
+	}	
+}
+
 func TestNotFound(t *testing.T) {
 	m := New()
 	got, found := m.Get("key")

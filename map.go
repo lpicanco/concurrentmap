@@ -9,8 +9,8 @@ type Map struct {
 }
 
 // New returns a new thread-safe map
-func New() Map {
-	return Map{items: make(map[interface{}]interface{})}
+func New() *Map {
+	return &Map{items: make(map[interface{}]interface{})}
 }
 
 // Get returns the value to which the specified key is mapped.
@@ -22,11 +22,30 @@ func (m *Map) Get(key interface{}) (value interface{}, found bool) {
 	return
 }
 
+// Contains returns true if the specified key exists.
+func (m *Map) Contains(key interface{}) bool {
+	_, found := m.Get(key)
+	return found
+}
+
 // Put associates the specified value with the specified key.
-func (m *Map) Put(key interface{}, value interface{}) {
+func (m *Map) Put(key interface{}, value interface{}) interface{} {
 	m.mu.Lock()
 	m.items[key] = value
 	m.mu.Unlock()
+	return value
+}
+
+// ComputeIfAbsent check if the specified key is not already associated with a value, attempts to compute its value using the given mapping function and enters it into this map.
+func (m *Map) ComputeIfAbsent(key interface{}, compFunction func(key interface{}) interface{}) (value interface{}, computed bool) {
+	value, found := m.Get(key)
+
+	if !found {
+		value = m.Put(key, compFunction(key))
+	}
+
+	return value, !found
+
 }
 
 // Remove the entry associated with the specified key.
